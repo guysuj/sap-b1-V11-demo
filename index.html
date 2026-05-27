@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAP Business One – Control Center</title>
+
+  <script
+    id="sap-ui-bootstrap"
+    src="https://ui5.sap.com/resources/sap-ui-core.js"
+    data-sap-ui-theme="sap_horizon"
+    data-sap-ui-libs="sap.m,sap.f,sap.tnt,sap.ui.layout"
+    data-sap-ui-compatVersion="edge"
+    data-sap-ui-async="false"
+    data-sap-ui-frameOptions="allow"
+  ></script>
+
+  <style>
+    html, body, #b1-root { height: 100%; margin: 0; overflow: hidden; }
+    .sapTNTToolPage { height: 100vh !important; }
+    .b1cc-ctx-bar.sapMBar {
+      background: var(--sapList_HeaderBackground, #f5f6f7);
+      border-bottom: 1px solid var(--sapList_BorderColor, #e0e0e0);
+      min-height: 2.75rem;
+    }
+    .b1cc-ctx-bar .sapMSegB { background: transparent; }
+    /* Wizard nav */
+    .b1wzNavPanel { background: var(--sapList_HeaderBackground,#f5f6f7); border-right: 1px solid var(--sapList_BorderColor,#e0e0e0); min-width: 210px; }
+    .b1wzNavActive { background: var(--sapList_SelectionBackgroundColor,#e8f3ff) !important; border-left: 3px solid var(--sapBrandColor,#0070b1); }
+    .b1wzNavLabel { color: var(--sapTextColor,#32363a); padding: 0.25rem 0.75rem; font-size: 0.875rem; }
+    .b1wzNavLabelActive { color: var(--sapBrandColor,#0070b1); padding: 0.25rem 0.75rem; font-size: 0.875rem; font-weight: bold; }
+    .b1wzContent { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+    .b1wzFormRow { margin-bottom: 0.75rem; }
+    .b1wzFormLabel { min-width: 9rem; }
+
+    /* Wizard styles */
+    .b1wzNavPanel {
+      border-right: 1px solid var(--sapList_BorderColor, #e0e0e0);
+      padding: 0.5rem 0;
+      min-width: 13rem;
+    }
+    .b1wzContent { padding: 0.5rem; }
+    .b1wzNavLabel { color: var(--sapContent_LabelColor); font-size: 0.875rem; }
+    .b1wzNavLabelActive { color: var(--sapHighlightColor, #0854a0); font-size: 0.875rem; font-weight: bold; }
+    .b1wzNavActive { background: var(--sapList_SelectionBackgroundColor, #e8f1fb) !important; border-radius: 0.25rem; }
+  </style>
+</head>
+<body class="sapUiBody sapUiSizeCozy" id="b1-root">
+
+<script>
+sap.ui.getCore().attachInit(function () {
+  "use strict";
+
+  var ALL_SECTIONS = [
+    "home","customers","companies","releases","licenses","extensions",
+    "instances","deploy","ha","monitoring"
+  ];
+  var SECTION_TITLES = {
+    home:       "Control Center",
+    customers:  "Customers",
+    companies:  "Companies",
+    releases:   "Releases",
+    licenses:   "Licenses",
+    extensions: "Extensions",
+    instances:  "Database Instances",
+    deploy:     "Deployments",
+    ha:         "High Availability",
+    monitoring: "Monitoring"
+  };
+
+  var oModel = new sap.ui.model.json.JSONModel({
+    pageTitle: "Control Center",
+    activeUsers: [
+      { name:"John Smith",   email:"j.smith@cronus.com",   role:"Administrator",        company:"CRONUS International", module:"Administration",  loginTime:"08:14", session:"2h 05m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    },
+      { name:"Maria Garcia", email:"m.garcia@cronus.com",  role:"Sales Manager",        company:"CRONUS International", module:"Sales A/R",        loginTime:"08:32", session:"1h 47m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    },
+      { name:"Peter Chen",   email:"p.chen@cronus.com",    role:"Finance Manager",      company:"CRONUS International", module:"Banking",          loginTime:"09:05", session:"1h 14m", statusText:"Idle",   statusState:"Warning", statusIcon:"sap-icon://time-entry-request" },
+      { name:"Anna Müller",  email:"a.muller@cronus.de",   role:"Warehouse Manager",    company:"CRONUS Germany",       module:"Inventory",        loginTime:"07:58", session:"2h 21m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    },
+      { name:"James Okafor", email:"j.okafor@cronus.com",  role:"Purchaser",            company:"CRONUS International", module:"Purchasing A/P",   loginTime:"09:30", session:"0h 49m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    },
+      { name:"Sofia Rossi",  email:"s.rossi@cronus.it",    role:"Accountant",           company:"CRONUS Italy",         module:"Financials",       loginTime:"08:45", session:"1h 34m", statusText:"Idle",   statusState:"Warning", statusIcon:"sap-icon://time-entry-request" },
+      { name:"Liu Wei",      email:"l.wei@cronus.cn",      role:"Sales Representative", company:"CRONUS Asia",          module:"CRM",              loginTime:"10:02", session:"0h 17m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    },
+      { name:"Carlos Ramos", email:"c.ramos@cronus.com",   role:"Service Technician",   company:"CRONUS International", module:"Service",          loginTime:"08:20", session:"1h 59m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    },
+      { name:"Emily Taylor", email:"e.taylor@cronus.com",  role:"HR Manager",           company:"CRONUS International", module:"Human Resources",  loginTime:"09:15", session:"1h 04m", statusText:"Idle",   statusState:"Warning", statusIcon:"sap-icon://time-entry-request" },
+      { name:"Raj Patel",    email:"r.patel@cronus.in",    role:"IT Consultant",        company:"CRONUS India",         module:"Administration",   loginTime:"10:30", session:"0h 06m", statusText:"Active", statusState:"Success", statusIcon:"sap-icon://status-positive"    }
+    ]
+  });
+
+  /* ── Controller ── */
+  sap.ui.controller("b1cc.Main", {
+
+    _showSection: function (sKey) {
+      var self = this;
+      ALL_SECTIONS.forEach(function (id) {
+        var o = self.byId(id + "Section");
+        if (o) o.setVisible(id === sKey);
+      });
+      self.getView().getModel().setProperty("/pageTitle", SECTION_TITLES[sKey] || "Control Center");
+    },
+
+    onSideNavToggle: function () {
+      var tp = this.byId("toolPage");
+      tp.setSideExpanded(!tp.getSideExpanded());
+    },
+
+    onNavContextChange: function (oEvent) {
+      var bIsB1 = oEvent.getParameter("item").getKey() === "b1";
+      this.byId("n-business").setVisible(bIsB1);
+      this.byId("n-platform").setVisible(!bIsB1);
+      this._showSection(bIsB1 ? "home" : "instances");
+    },
+
+    onNavSelect: function (oEvent) {
+      var sKey = oEvent.getParameter("item").getKey();
+      if (sKey && ALL_SECTIONS.indexOf(sKey) >= 0) {
+        this._showSection(sKey);
+      }
+    },
+
+    onTilePress: function (oEvent) {
+      sap.m.MessageToast.show("Opening: " + oEvent.getSource().getHeader());
+    },
+
+    onActiveUsersTilePress: function () {
+      this.byId("mainNav").to(this.byId("activeUsersPage").getId());
+    },
+
+    onNavBack: function () {
+      this.byId("mainNav").back();
+    },
+
+    onMsgClose: function () {
+      this.byId("releaseStrip").setVisible(false);
+    },
+
+    /* ══════════════════════════════════════════════════
+       TENANT CREATION WIZARD  — full-page Fiori Wizard
+    ══════════════════════════════════════════════════ */
+    _wiz:  null,   // sap.m.Wizard instance
+    _wizS: {},     // wizard state
+
+    onNewCompanyPress: function () {
+      var self = this;
+      // Quick mode picker before navigating
+      var oNew  = new sap.m.RadioButton({ text:"New — Create a default tenant",        groupName:"wizMode", selected:true });
+      var oBkp  = new sap.m.RadioButton({ text:"From Backup — Restore from backup file", groupName:"wizMode" });
+      var oDlg  = new sap.m.Dialog({
+        title: "Tenant Creation Wizard",
+        content:[
+          new sap.m.VBox({ class:"sapUiSmallMarginBeginEnd sapUiSmallMarginTopBottom", items:[
+            new sap.m.Title({ text:"Welcome to the Tenant Creation Wizard.", level:"H4", class:"sapUiSmallMarginBottom" }),
+            new sap.m.Text({ text:"You can use this wizard to create a new tenant. Select a creation option and choose Start.", wrapping:true, class:"sapUiSmallMarginBottom" }),
+            new sap.m.Title({ text:"Creation Options", level:"H5", class:"sapUiSmallMarginBottom" }),
+            oNew, oBkp
+          ]})
+        ],
+        beginButton: new sap.m.Button({
+          text:"Start Wizard", type:"Emphasized",
+          press: function(){
+            oDlg.close();
+            var sMode = oBkp.getSelected() ? "backup" : "new";
+            self._startWizardPage(sMode);
+          }
+        }),
+        endButton: new sap.m.Button({ text:"Cancel", press: function(){ oDlg.close(); } })
+      });
+      oDlg.open();
+    },
+
+    _startWizardPage: function (sMode) {
+      var self = this;
+      self._wizS = { mode: sMode, customer:null, instance:null, backup:null,
+                     tenantName:"", dbName:"", purpose:"",
+                     users: self._wizMockUsers(),
+                     sendEmail: false, _provDone: false };
+      self._buildWizardPage();
+      self.byId("mainNav").to(self.byId("wizardPage").getId());
+    },
+
+    _wizMockUsers: function () {
+      return [
+        { include:true,  userCode:"harigijs",     systemUser:"harigijs",     type:"Customer", roles:["Customer Administrator"],          superuser:false, license:"Professional" },
+        { include:true,  userCode:"gijstest1",    systemUser:"gijstest1",    type:"Customer", roles:["Business User"],                   superuser:false, license:"Limited"      },
+        { include:false, userCode:"kosto2",        systemUser:"kosto2",       type:"Customer", roles:["Business User"],                   superuser:false, license:""             },
+        { include:false, userCode:"kosto",         systemUser:"kosto",        type:"Customer", roles:["Consultant"],                      superuser:false, license:""             },
+        { include:true,  userCode:"sapserviceb1c", systemUser:"sapserviceb1c",type:"Operator", roles:["Landscape Operator"],              superuser:true,  license:"Professional" },
+        { include:false, userCode:"c5252580",      systemUser:"c5252580",     type:"Operator", roles:["Landscape Operator"],              superuser:false, license:""             },
+        { include:false, userCode:"i043704",       systemUser:"i043704",      type:"Operator", roles:["Consultant","Business User"],      superuser:false, license:""             },
+        { include:false, userCode:"test",          systemUser:"test",         type:"Operator", roles:["Business User"],                   superuser:false, license:""             }
+      ];
+    },
+
+    // Base pool counts (before any assignments in this wizard session)
+    _wizPoolBase: {
+      "Professional": { total:45, baseline:29 },
+      "Limited":       { total:25, baseline:10 },
+      "Mobile Service":{ total:10, baseline:5  },
+      "Starter Package":{ total:10, baseline:2 },
+      "Auditor":        { total:5,  baseline:0 }
+    },
+
+    _wizCalcPool: function () {
+      var self = this;
+      // Count how many included users have each license assigned
+      var counts = {};
+      self._wizS.users.forEach(function(u){
+        if (u.include && u.license) counts[u.license] = (counts[u.license]||0) + 1;
+      });
+      return Object.keys(self._wizPoolBase).map(function(k){
+        var b = self._wizPoolBase[k];
+        var assigned = counts[k] || 0;
+        return { name: k==="Professional"?"SAP Business One Professional":
+                       k==="Limited"?"SAP Business One Limited":
+                       k==="Mobile Service"?"Mobile Service User":
+                       k==="Starter Package"?"Starter Package":"Auditor",
+                 key: k,
+                 used: b.baseline + assigned,
+                 total: b.total };
+      });
+    },
+
+    _buildWizardPage: function () {
+      var self = this;
+      var oWizPage = self.byId("wizardPage");
+      // Remove previous wizard if exists
+      var oOld = oWizPage.getContent ? oWizPage.getContent()[0] : null;
+      if (oOld && oOld.destroy) oOld.destroy();
+      oWizPage.removeAllContent();
+
+      // ── Step 1: Select Customer ──
+      var oStep1 = new sap.m.WizardStep({ title:"Select Customer", icon:"sap-icon://group",
+        complete: function(){ oStep1.setValidated(true); } });
+      oStep1.addContent(new sap.m.Text({ text:"Select the customer for which you want to create a tenant.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
+      var aCust = [
+        {name:"Intercompany Dev",     type:"Customer", installNo:"SAP-INTERN"},
+        {name:"EDS Customer HANA",    type:"Customer", installNo:"SAP-INTERN"},
+        {name:"CRONUS International", type:"Customer", installNo:"SAP-INTERN"},
+        {name:"UPN Test",             type:"Customer", installNo:""},
+        {name:"EDS Customer",         type:"Customer", installNo:"SAP-INTERN"},
+        {name:"CRONUS Germany",       type:"Customer", installNo:"SAP-INTERN"},
+        {name:"TestScenario",         type:"Customer", installNo:""},
+        {name:"SBODEMO_HU",           type:"Customer", installNo:""},
+        {name:"TestCustomer",         type:"Customer", installNo:"SAP-INTERN"}
+      ];
+      var oTbl1 = self._wizTable(["Status","Customer Name","Customer Type","Installation Number"],
+        aCust, ["sap-icon://person-placeholder","name","type","installNo"],
+        function(oE){
+          self._wizS.customer = oE.getParameter("listItem").getBindingContext("wd").getObject();
+          oStep1.setValidated(true);
+        }, false);
+      oStep1.addContent(oTbl1);
+      oStep1.setValidated(false);
+
+      // ── Step 2: Select Database Instance ──
+      var oStep2 = new sap.m.WizardStep({ title:"Select Database Instance", icon:"sap-icon://database" });
+      oStep2.addContent(new sap.m.Text({ text:"Select the database instance in which you want to create a tenant.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
+      var aInst = [
+        {name:"DB-PROD-001",purpose:"Productive",version:"1000.190.09",tenants:"12"},
+        {name:"DB-PROD-002",purpose:"Productive",version:"1000.170.07",tenants:"8"},
+        {name:"DB-TEST-001",purpose:"Testing",   version:"1000.230.13",tenants:"4"},
+        {name:"DB-PROD-003",purpose:"Productive",version:"1000.250.15",tenants:"15"},
+        {name:"DB-PROD-004",purpose:"Productive",version:"1000.260.16",tenants:"10"},
+        {name:"DB-PROD-005",purpose:"Productive",version:"1000.280.18",tenants:"6"},
+        {name:"DB-TEST-002",purpose:"Testing",   version:"1000.300.20",tenants:"2"},
+        {name:"DB-PROD-007",purpose:"Productive",version:"1000.310.21",tenants:"11"}
+      ];
+      var oTbl2 = self._wizTable(["Status","Name","Purpose","Version","Number of Tenants"],
+        aInst, ["sap-icon://database","name","purpose","version","tenants"],
+        function(oE){
+          self._wizS.instance = oE.getParameter("listItem").getBindingContext("wd").getObject();
+          oStep2.setValidated(true);
+        }, false);
+      oStep2.addContent(oTbl2);
+      oStep2.setValidated(false);
+
+      // ── Step 3 (Backup only): Select Backup ──
+      var oStep3Bkp = new sap.m.WizardStep({ title:"Select Backup", icon:"sap-icon://save",
+        visible: self._wizS.mode === "backup" });
+      oStep3Bkp.addContent(new sap.m.Text({ text:"Select a backup file to restore the tenant from.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
+      var aBkp = [
+        {file:"CRONUS_INT_20260520_0200.bak", date:"2026-05-20 02:00", size:"2.4 GB", type:"Full"},
+        {file:"CRONUS_INT_20260519_0200.bak", date:"2026-05-19 02:00", size:"2.3 GB", type:"Full"},
+        {file:"CRONUS_INT_20260518_0200.bak", date:"2026-05-18 02:00", size:"2.3 GB", type:"Full"},
+        {file:"CRONUS_DE_20260520_0200.bak",  date:"2026-05-20 02:00", size:"1.8 GB", type:"Full"},
+        {file:"CRONUS_DE_20260519_0200.bak",  date:"2026-05-19 02:00", size:"1.7 GB", type:"Full"}
+      ];
+      var oTbl3 = self._wizTable(["Backup File","Date","Size","Type"],
+        aBkp, ["file","date","size","type"],
+        function(oE){
+          self._wizS.backup = oE.getParameter("listItem").getBindingContext("wd").getObject();
+          oStep3Bkp.setValidated(true);
+        }, false);
+      oStep3Bkp.addContent(oTbl3);
+      oStep3Bkp.setValidated(self._wizS.mode !== "backup");
+
+      // ── Step 4: Tenant Information ──
+      var oStep4 = new sap.m.WizardStep({ title:"Tenant Information", icon:"sap-icon://building" });
+      oStep4.addContent(new sap.m.Text({ text:"Specify the tenant information.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
+      var validateInfo = function(){
+        oStep4.setValidated(!!(self._wizS.tenantName && self._wizS.dbName && self._wizS.purpose));
+      };
+      var mkRow = function(lbl, oCtrl, bReq){
+        var r = new sap.m.HBox({ alignItems:"Center", class:"sapUiSmallMarginBottom" });
+        r.addItem(new sap.m.Label({ text:lbl, required:!!bReq, width:"10rem" }));
+        r.addItem(oCtrl); return r;
+      };
+      oStep4.addContent(mkRow("Company Name",
+        new sap.m.Input({ width:"20rem", placeholder:"Required", value: self._wizS.tenantName,
+          liveChange:function(oE){ self._wizS.tenantName=oE.getParameter("value"); validateInfo(); } }), true));
+      oStep4.addContent(mkRow("Database Name",
+        new sap.m.Input({ width:"20rem", placeholder:"Required", value: self._wizS.dbName,
+          liveChange:function(oE){ self._wizS.dbName=oE.getParameter("value"); validateInfo(); } }), true));
+      oStep4.addContent(mkRow("Purpose",
+        new sap.m.Select({ width:"20rem", selectedKey: self._wizS.purpose,
+          change:function(oE){ self._wizS.purpose=oE.getParameter("selectedItem").getKey(); validateInfo(); },
+          items:[ new sap.ui.core.Item({key:"",text:""}),
+                  new sap.ui.core.Item({key:"Productive",text:"Productive"}),
+                  new sap.ui.core.Item({key:"Testing",   text:"Testing"}),
+                  new sap.ui.core.Item({key:"Demo",      text:"Demo"}) ] }), true));
+      oStep4.setValidated(false);
+
+      // ── Step 5: Users & Licenses ──
+      var oStep5 = new sap.m.WizardStep({ title:"Users & Licenses", icon:"sap-icon://employee" });
+      oStep5.setValidated(true);
+      oStep5.addContent(new sap.m.Text({
+        text:"Select which users to include in this tenant, assign a role and a license type to each. Changes update the license pool below in real time.",
+        wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
+
+      var aLicTypes   = ["","Professional","Limited","Mobile Service","Starter Package","Auditor"];
+      var aRoles      = ["Business User","Consultant","Customer Administrator","Landscape Operator"];
+      var oUsrModel   = new sap.ui.model.json.JSONModel({ users: self._wizS.users });
+      var oPoolModel  = new sap.ui.model.json.JSONModel({ pool: self._wizCalcPool() });
+
+      // helper: refresh pool table after any change
+      var refreshPool = function(){
+        oPoolModel.setProperty("/pool", self._wizCalcPool());
+      };
+
+      // ── Users table ──
+      var oSelectAllCB = new sap.m.CheckBox({
+        text: "Select / Deselect All",
+        selected: self._wizS.users.every(function(u){ return u.include; }),
+        select: function(oE){
+          var bAll = oE.getParameter("selected");
+          self._wizS.users.forEach(function(u){ u.include = bAll; });
+          oUsrModel.setProperty("/users", self._wizS.users);
+          refreshPool();
+        }
+      });
+
+      var oUsrTbl = new sap.m.Table({
+        sticky:["ColumnHeaders"],
+        alternateRowColors: true,
+        headerToolbar: new sap.m.OverflowToolbar({
+          content:[
+            new sap.m.Title({ text:"Users", level:"H5" }),
+            new sap.m.ToolbarSpacer(),
+            oSelectAllCB
+          ]
+        }),
+        columns:[
+          new sap.m.Column({ header: new sap.m.Label({text:"Include"}),      width:"5rem",  hAlign:"Center" }),
+          new sap.m.Column({ header: new sap.m.Label({text:"User Code"}),    width:"9rem"   }),
+          new sap.m.Column({ header: new sap.m.Label({text:"System User"}),  width:"9rem"   }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Type"}),         width:"7rem"   }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Role"})                         }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Superuser"}),    width:"6rem",  hAlign:"Center" }),
+          new sap.m.Column({ header: new sap.m.Label({text:"License Type"}), width:"14rem"  })
+        ]
+      });
+      oUsrTbl.setModel(oUsrModel,"wd");
+      oUsrTbl.bindItems("wd>/users", new sap.m.ColumnListItem({
+        highlight: { path:"wd>include", formatter: function(b){ return b ? "Success" : "None"; } },
+        cells:[
+          // Include checkbox
+          new sap.m.CheckBox({ selected:"{wd>include}", select: function(oE){
+            var bVal = oE.getParameter("selected");
+            var oCtx = oE.getSource().getBindingContext("wd");
+            var sPath = oCtx.getPath();
+            oCtx.getModel("wd").setProperty(sPath+"/include", bVal);
+            // sync back to wizS
+            var idx = parseInt(sPath.replace("/users/",""));
+            self._wizS.users[idx].include = bVal;
+            // update select-all checkbox state
+            oSelectAllCB.setSelected(self._wizS.users.every(function(u){ return u.include; }));
+            refreshPool();
+          }}),
+          new sap.m.Text({text:"{wd>userCode}"}),
+          new sap.m.Text({text:"{wd>systemUser}"}),
+          new sap.m.ObjectStatus({ text:"{wd>type}",
+            state:{ path:"wd>type", formatter:function(t){ return t==="Operator"?"Warning":"Success"; }} }),
+          // Role — MultiComboBox (Fiori standard for multi-select inline)
+          new sap.m.MultiComboBox({
+            selectedKeys:"{wd>roles}",
+            items: aRoles.map(function(r){ return new sap.ui.core.Item({key:r,text:r}); }),
+            selectionChange: function(oE){
+              var oCtx = oE.getSource().getBindingContext("wd");
+              var sPath = oCtx.getPath();
+              var aKeys = oE.getSource().getSelectedKeys();
+              oCtx.getModel("wd").setProperty(sPath+"/roles", aKeys);
+              var idx = parseInt(sPath.replace("/users/",""));
+              self._wizS.users[idx].roles = aKeys;
+            }
+          }),
+          // Superuser — clickable toggle
+          new sap.m.CheckBox({ selected:"{wd>superuser}", select: function(oE){
+            var bVal = oE.getParameter("selected");
+            var oCtx = oE.getSource().getBindingContext("wd");
+            var sPath = oCtx.getPath();
+            oCtx.getModel("wd").setProperty(sPath+"/superuser", bVal);
+            var idx = parseInt(sPath.replace("/users/",""));
+            self._wizS.users[idx].superuser = bVal;
+          }}),
+          // License type — updates pool on change
+          new sap.m.Select({
+            selectedKey:"{wd>license}",
+            items: aLicTypes.map(function(l){ return new sap.ui.core.Item({key:l,text:l||"—"}); }),
+            change: function(oE){
+              var oCtx = oE.getSource().getBindingContext("wd");
+              var sPath = oCtx.getPath();
+              var sLic = oE.getParameter("selectedItem").getKey();
+              oCtx.getModel("wd").setProperty(sPath+"/license", sLic);
+              var idx = parseInt(sPath.replace("/users/",""));
+              self._wizS.users[idx].license = sLic;
+              refreshPool();
+            }
+          })
+        ]
+      }));
+      oStep5.addContent(oUsrTbl);
+
+      // ── License Pool Summary (live) ──
+      oStep5.addContent(new sap.m.Title({ text:"License Pool", level:"H5" }).addStyleClass("sapUiMediumMarginTop sapUiTinyMarginBottom"));
+      oStep5.addContent(new sap.m.Text({ text:"Available counts update as you assign licenses above.", wrapping:true }).addStyleClass("sapUiTinyMarginBottom"));
+      var oPoolTbl = new sap.m.Table({
+        alternateRowColors: true,
+        columns:[
+          new sap.m.Column({ header: new sap.m.Label({text:"License Type"}) }),
+          new sap.m.Column({ header: new sap.m.Label({text:"In Use (total)"}), width:"8rem",  hAlign:"End" }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Pool Total"}),     width:"7rem",  hAlign:"End" }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Available"}),      width:"7rem",  hAlign:"End" }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Status"}),         width:"8rem"  })
+        ]
+      });
+      oPoolTbl.setModel(oPoolModel,"wp");
+      oPoolTbl.bindItems("wp>/pool", new sap.m.ColumnListItem({ cells:[
+        new sap.m.Text({text:"{wp>name}"}),
+        new sap.m.Text({text:"{wp>used}",  textAlign:"End"}),
+        new sap.m.Text({text:"{wp>total}", textAlign:"End"}),
+        new sap.m.Text({text:{ parts:[{path:"wp>used"},{path:"wp>total"}],
+          formatter:function(u,t){ return Math.max(0,t-u)+""; }}, textAlign:"End"}),
+        new sap.m.ObjectStatus({
+          text:{  parts:[{path:"wp>used"},{path:"wp>total"}], formatter:function(u,t){ return u>=t?"Exhausted":u/t>0.8?"Low":"Available"; }},
+          state:{ parts:[{path:"wp>used"},{path:"wp>total"}], formatter:function(u,t){ return u>=t?"Error":u/t>0.8?"Warning":"Success"; }} })
+      ]}));
+      oStep5.addContent(oPoolTbl);
+
+      // ── Step 6: Review ──
+      var oStep6 = new sap.m.WizardStep({
+        title:"Review", icon:"sap-icon://detail-view",
+        activate: function(){ self._populateReviewStep(oStep6); }
+      });
+      oStep6.setValidated(true);
+      self._wizReviewStep = oStep6;
+
+      // ── Step 7: Process / Finish ──
+      var oStep7 = new sap.m.WizardStep({
+        title:"Process / Finish", icon:"sap-icon://sys-enter-2",
+        activate: function(){ self._startProvisioning(oStep7); }
+      });
+      oStep7.setValidated(true);
+      self._wizFinishStep = oStep7;
+
+      // ── Assemble sap.m.Wizard ──
+      var oWizard = new sap.m.Wizard({
+        showNextButton: true,
+        steps: self._wizS.mode === "backup"
+          ? [oStep1, oStep2, oStep3Bkp, oStep4, oStep5, oStep6, oStep7]
+          : [oStep1, oStep2,            oStep4, oStep5, oStep6, oStep7],
+        complete: function(){ self._startProvisioning(oStep7); }
+      });
+
+      self._wiz = oWizard;
+      oWizPage.addContent(oWizard);
+    },
+
+    _wizTable: function(aCols, aData, aFields, fnSelect, bMulti){
+      var oModel = new sap.ui.model.json.JSONModel({ rows: aData });
+      var oTbl = new sap.m.Table({
+        mode: bMulti ? "MultiSelect" : "SingleSelectMaster",
+        selectionChange: fnSelect,
+        columns: aCols.map(function(c){ return new sap.m.Column({ header: new sap.m.Label({text:c}) }); })
+      });
+      oTbl.setModel(oModel,"wd");
+      oTbl.bindItems("wd>/rows", new sap.m.ColumnListItem({
+        cells: aFields.map(function(f){
+          if (f.indexOf("sap-icon://") === 0) return new sap.ui.core.Icon({src:f, color:"#0070b1"});
+          return new sap.m.Text({text:"{wd>" + f + "}"});
+        })
+      }));
+      return oTbl;
+    },
+
+    _populateReviewStep: function(oStep) {
+      var self = this; var s = self._wizS;
+      oStep.destroyContent();
+
+      /* ── Notification checkbox (top) ── */
+      oStep.addContent(new sap.m.CheckBox({
+        text:"Send notification email to tenant users upon new tenant availability",
+        selected: !!s.sendEmail,
+        select:function(oE){ s.sendEmail=oE.getParameter("selected"); }
+      }).addStyleClass("sapUiSmallMarginBottom"));
+
+      /* ── First-login disclaimer (top) ── */
+      oStep.addContent(new sap.m.MessageStrip({
+        text:"Tenant initialization (e.g. financial periods, chart of accounts) will be completed during the first login to the tenant by an authorized user.",
+        type:"Information", showIcon:true
+      }).addStyleClass("sapUiSmallMarginBottom"));
+
+      /* ── Settings summary ── */
+      oStep.addContent(new sap.m.Text({ text:"Please review your settings before starting provisioning.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
+
+      var oForm = new sap.m.Panel({ backgroundDesign:"Solid", headerText:"Summary" });
+      var oVBox = new sap.m.VBox({});
+      oVBox.addStyleClass("sapUiSmallMarginBeginEnd sapUiSmallMarginTopBottom");
+
+      var addSect = function(sTitle, aLines){
+        oVBox.addItem(new sap.m.Title({text:sTitle, level:"H5"}).addStyleClass("sapUiSmallMarginTop sapUiTinyMarginBottom"));
+        aLines.forEach(function(l){ oVBox.addItem(new sap.m.Text({text:l, wrapping:true}).addStyleClass("sapUiTinyMarginBegin")); });
+      };
+
+      var c=s.customer||{};   addSect("Customer",          ["Name: "+(c.name||"—"),"Type: "+(c.type||"—"),"Installation Number: "+(c.installNo||"—")]);
+      var i=s.instance||{};   addSect("Database Instance", ["Name: "+(i.name||"—"),"Purpose: "+(i.purpose||"—"),"Version: "+(i.version||"—")]);
+      if (s.mode==="backup"&&s.backup) addSect("Backup",   ["File: "+s.backup.file,"Date: "+s.backup.date]);
+      addSect("Tenant", ["Company Name: "+(s.tenantName||"—"),"Database Name: "+(s.dbName||"—"),"Purpose: "+(s.purpose||"—")]);
+
+      var aIncl = (s.users||[]).filter(function(u){return u.include;});
+      if (aIncl.length){
+        addSect("Users & Licenses", aIncl.map(function(u){
+          var parts = [u.userCode];
+          var aRoles = u.roles && u.roles.length ? u.roles : (u.role ? [u.role] : []);
+          if (aRoles.length) parts.push(aRoles.join(", "));
+          parts.push(u.license||"No license");
+          if (u.superuser) parts.push("Superuser");
+          return parts.join(" — ");
+        }));
+      } else {
+        addSect("Users & Licenses", ["No users assigned"]);
+      }
+
+      oForm.addContent(oVBox);
+      oStep.addContent(oForm);
+    },
+
+    _startProvisioning: function(oStep) {
+      var self = this; var s = self._wizS;
+      if (s._provDone) return;
+      oStep.destroyContent();
+      var oCenter = new sap.m.VBox({ alignItems:"Center", justifyContent:"Center", class:"sapUiLargeMarginTop" });
+      var oBusy = new sap.m.BusyIndicator({ size:"3rem", class:"sapUiMediumMarginBottom" });
+      var oTitle = new sap.m.Title({
+        text: s.mode==="backup" ? "Restoring tenant from backup, please wait…" : "Creating tenant, please wait…",
+        level:"H4", textAlign:"Center"
+      });
+      var oSub = new sap.m.Text({ text:"This may take a few minutes. Do not close this window.", textAlign:"Center" }).addStyleClass("sapUiSmallMarginTop");
+      oCenter.addItem(oBusy); oCenter.addItem(oTitle); oCenter.addItem(oSub);
+      oStep.addContent(oCenter);
+      if (self._wiz) self._wiz.setShowNextButton(false);
+
+      setTimeout(function(){
+        s._provDone = true;
+        oStep.destroyContent();
+        var oSuccess = new sap.m.VBox({ alignItems:"Center", justifyContent:"Center", class:"sapUiLargeMarginTop" });
+        oSuccess.addItem(new sap.ui.core.Icon({ src:"sap-icon://sys-enter-2", size:"4rem", color:"#107E3E", class:"sapUiMediumMarginBottom" }));
+        oSuccess.addItem(new sap.m.Title({
+          text:"Tenant successfully " + (s.mode==="backup"?"restored!":"created!"),
+          level:"H4", textAlign:"Center"
+        }));
+        oSuccess.addItem(new sap.m.Text({
+          text:'Company "' + (s.tenantName||"New Tenant") + '" is now available.',
+          textAlign:"Center", class:"sapUiSmallMarginTop"
+        }));
+        if (s.sendEmail){
+          oSuccess.addItem(new sap.m.Text({
+            text:"Notification emails have been sent to assigned users.",
+            textAlign:"Center", class:"sapUiTinyMarginTop"
+          }));
+        }
+        oSuccess.addItem(new sap.m.Button({
+          text:"Back to Control Center", type:"Emphasized", class:"sapUiMediumMarginTop",
+          press:function(){ self.byId("mainNav").back(); }
+        }));
+        oStep.addContent(oSuccess);
+      }, 3500);
+    }
+
+  });
+
+
+  /* ── XML View ── */
+  var T = "sapUiTinyMarginEnd sapUiTinyMarginBottom"; /* tile margin shorthand */
+  var sXML = [
+'<?xml version="1.0" encoding="UTF-8"?>',
+'<mvc:View controllerName="b1cc.Main"',
+'  xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:tnt="sap.tnt"',
+'  height="100%" displayBlock="true">',
+
+'<tnt:ToolPage id="toolPage" sideExpanded="true">',
+
+/* ══════════════════════════════════════════════════════════════
+   TOOL HEADER
+══════════════════════════════════════════════════════════════ */
+'<tnt:header>',
+'  <tnt:ToolHeader>',
+'    <Button icon="sap-icon://menu2" type="Transparent" tooltip="Toggle navigation" press=".onSideNavToggle">',
+'      <layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData>',
+'    </Button>',
+'    <ToolbarSpacer width="4px"/>',
+'    <Title text="SAP Business One" level="H4" wrapping="false">',
+'      <layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData>',
+'    </Title>',
+'    <Title text=" | " level="H5" wrapping="false">',
+'      <layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData>',
+'    </Title>',
+'    <Title text="Control Center" level="H4" wrapping="false">',
+'      <layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData>',
+'    </Title>',
+'    <Text text="v11.0" class="sapUiTinyMarginBegin">',
+'      <layoutData><OverflowToolbarLayoutData priority="Low"/></layoutData>',
+'    </Text>',
+'    <ToolbarSpacer><layoutData><OverflowToolbarLayoutData priority="NeverOverflow" minWidth="16px"/></layoutData></ToolbarSpacer>',
+'    <ObjectStatus text="System Online" state="Success" icon="sap-icon://status-positive">',
+'      <layoutData><OverflowToolbarLayoutData priority="Low"/></layoutData>',
+'    </ObjectStatus>',
+'    <tnt:ToolHeaderUtilitySeparator/>',
+'    <Button icon="sap-icon://search"   type="Transparent" tooltip="Search"><layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData></Button>',
+'    <Button icon="sap-icon://bell"     type="Transparent" tooltip="Notifications (3)"><layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData></Button>',
+'    <Button icon="sap-icon://sys-help" type="Transparent" tooltip="Help"><layoutData><OverflowToolbarLayoutData priority="Low"/></layoutData></Button>',
+'    <tnt:ToolHeaderUtilitySeparator/>',
+'    <Text text="cc-admin" wrapping="false"><layoutData><OverflowToolbarLayoutData priority="Low"/></layoutData></Text>',
+'    <Avatar initials="CC" displaySize="XS" tooltip="Control Center Admin" backgroundColor="Accent6">',
+'      <layoutData><OverflowToolbarLayoutData priority="NeverOverflow"/></layoutData>',
+'    </Avatar>',
+'  </tnt:ToolHeader>',
+'</tnt:header>',
+
+/* ══════════════════════════════════════════════════════════════
+   SIDE NAVIGATION
+   Business group  →  Customers / Companies / Releases / Licenses / Extensions
+   Platform group  →  DB Instances / Deployments / HA / Monitoring
+══════════════════════════════════════════════════════════════ */
+'<tnt:sideContent>',
+'  <tnt:SideNavigation id="sideNav" expanded="true" itemSelect=".onNavSelect">',
+'    <tnt:NavigationList>',
+
+'      <tnt:NavigationListItem id="n-home" text="Home" icon="sap-icon://home" key="home" selected="true"/>',
+
+'      <tnt:NavigationListItem id="n-business" text="Business" icon="sap-icon://business-objects-experience" expanded="true" visible="true">',
+'        <tnt:NavigationListItem id="n-customers"  text="Customers"  key="customers"/>',
+'        <tnt:NavigationListItem id="n-companies"  text="Companies"  key="companies"/>',
+'        <tnt:NavigationListItem id="n-releases"   text="Releases"   key="releases"/>',
+'        <tnt:NavigationListItem id="n-licenses"   text="Licenses"   key="licenses"/>',
+'        <tnt:NavigationListItem id="n-extensions" text="Extensions" key="extensions"/>',
+'      </tnt:NavigationListItem>',
+
+'      <tnt:NavigationListItem id="n-platform" text="Platform" icon="sap-icon://sys-monitor" expanded="true" visible="false">',
+'        <tnt:NavigationListItem id="n-instances"  text="DB Instances"      key="instances"/>',
+'        <tnt:NavigationListItem id="n-deploy"     text="Deployments"       key="deploy"/>',
+'        <tnt:NavigationListItem id="n-ha"         text="High Availability" key="ha"/>',
+'        <tnt:NavigationListItem id="n-monitoring" text="Monitoring"        key="monitoring"/>',
+'      </tnt:NavigationListItem>',
+
+'    </tnt:NavigationList>',
+'    <tnt:fixedItem>',
+'      <tnt:NavigationList>',
+'        <tnt:NavigationListItem text="Alerts"   icon="sap-icon://bell"            key="fx-alerts"/>',
+'        <tnt:NavigationListItem text="Settings" icon="sap-icon://action-settings" key="fx-settings"/>',
+'      </tnt:NavigationList>',
+'    </tnt:fixedItem>',
+'  </tnt:SideNavigation>',
+'</tnt:sideContent>',
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN CONTENTS
+══════════════════════════════════════════════════════════════ */
+'<tnt:mainContents>',
+
+'  <MessageStrip id="releaseStrip"',
+'    text="SAP Business One b1-2808 is now available — 2 companies are still running b1-2802 and are due for upgrade."',
+'    type="Information" showIcon="true" showCloseButton="true" close=".onMsgClose"/>',
+
+'  <NavContainer id="mainNav">',
+'    <pages>',
+
+/* ─────────────────── MAIN PAGE ─────────────────── */
+'      <Page id="homePage" showHeader="true" enableScrolling="false">',
+
+'        <customHeader>',
+'          <Bar>',
+'            <contentLeft><Title id="sectionTitle" text="{/pageTitle}" level="H3"/></contentLeft>',
+'            <contentRight>',
+'              <ObjectStatus text="System Online · v11.0.0 PL04" state="Success" icon="sap-icon://status-positive" inverted="true"/>',
+'              <Text text="   Mon 26 May 2026" class="sapUiSmallMarginBegin"/>',
+'            </contentRight>',
+'          </Bar>',
+'        </customHeader>',
+
+'        <subHeader>',
+'          <Bar class="b1cc-ctx-bar">',
+'            <contentLeft>',
+'              <SegmentedButton id="navCtx" selectedKey="b1" selectionChange=".onNavContextChange">',
+'                <items>',
+'                  <SegmentedButtonItem key="b1"       text="SAP B1"/>',
+'                  <SegmentedButtonItem key="platform" text="Platform"/>',
+'                </items>',
+'              </SegmentedButton>',
+'            </contentLeft>',
+'          </Bar>',
+'        </subHeader>',
+
+'        <content>',
+'          <ScrollContainer horizontal="false" vertical="true" height="100%">',
+'            <VBox class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop">',
+
+
+/* ══════════════════════════════════════════════════════════════
+   HOME SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="homeSection" visible="true">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="B1 OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Customers" subheader="Registered tenants" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All healthy"><NumericContent value="8" valueColor="Good" icon="sap-icon://group" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Active Users" subheader="Sessions active" press=".onActiveUsersTilePress" class="' + T + '">',
+'      <TileContent footer="Named users"><NumericContent value="24" indicator="Up" icon="sap-icon://employee" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="License Usage" subheader="Named user seats" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="18 of 25 assigned"><NumericContent value="18" scale="/25" valueColor="Critical" indicator="Up" icon="sap-icon://crm-service-tickets" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Companies" subheader="Active tenants" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="10 ready · 2 pending"><NumericContent value="12" valueColor="Good" icon="sap-icon://building" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Pending Upgrades" subheader="Version outdated" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="b1-2802 → b1-2808"><NumericContent value="2" valueColor="Critical" icon="sap-icon://it-system" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="QUICK ACTIONS" design="Bold"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="New Customer" subheader="Onboard a customer" headerImage="sap-icon://add" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Provision"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="New Company" subheader="Provision a tenant" headerImage="sap-icon://building" press=".onNewCompanyPress" class="' + T + '">',
+'      <TileContent footer="Provision"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Upgrade Center" subheader="Version management" headerImage="sap-icon://it-system" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="2 pending"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Extension Catalog" subheader="Add-ons &amp; plugins" headerImage="sap-icon://tools-opportunity" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="8 available"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   CUSTOMERS SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="customersSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Total Customers" subheader="Active" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All healthy"><NumericContent value="8" valueColor="Good" icon="sap-icon://group" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Licensed Users" subheader="Seats assigned" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Across all customers"><NumericContent value="18" valueColor="Good" icon="sap-icon://crm-service-tickets" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Unlicensed Users" subheader="No seat assigned" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Needs attention"><NumericContent value="6" valueColor="Error" indicator="Up" icon="sap-icon://alert" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Extension Entitlements" subheader="Active grants" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Across 5 customers"><NumericContent value="12" icon="sap-icon://tools-opportunity" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="CUSTOMER MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Customer List" subheader="All registered customers" headerImage="sap-icon://group" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="8 customers"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="User Management" subheader="Users, roles &amp; seats" headerImage="sap-icon://employee" press=".onActiveUsersTilePress" class="' + T + '">',
+'      <TileContent footer="24 users"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="License Assignments" subheader="Grant &amp; revoke seats" headerImage="sap-icon://crm-service-tickets" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="18 / 25 seats used"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Extension Entitlements" subheader="Per-customer grants" headerImage="sap-icon://tools-opportunity" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="12 active"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="IDENTITY &amp; ACCESS" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Identity Provider" subheader="IdP &amp; SSO config" headerImage="sap-icon://key" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="1 configured"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Role Management" subheader="User roles &amp; permissions" headerImage="sap-icon://permission" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="5 roles defined"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Audit Log" subheader="User activity &amp; changes" headerImage="sap-icon://audit" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="View activity"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   COMPANIES SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="companiesSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Total Companies" subheader="All tenants" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Across 8 customers"><NumericContent value="12" valueColor="Good" icon="sap-icon://building" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Ready" subheader="Fully operational" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All checks green"><NumericContent value="10" valueColor="Good" icon="sap-icon://status-positive" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Provisioning" subheader="Setup in progress" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Est. 5 min remaining"><NumericContent value="1" valueColor="Critical" icon="sap-icon://time-entry-request" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Upgrade Available" subheader="Newer release ready" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="b1-2802 → b1-2808"><NumericContent value="2" valueColor="Critical" icon="sap-icon://it-system" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="COMPANY MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Company List" subheader="All provisioned tenants" headerImage="sap-icon://building" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="12 companies"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="New Company" subheader="Provision a tenant" headerImage="sap-icon://add" press=".onNewCompanyPress" class="' + T + '">',
+'      <TileContent footer="Provision"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="User Bindings" subheader="Enroll users to companies" headerImage="sap-icon://employee" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="24 enrolled"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Storage Allocation" subheader="Quota per tenant" headerImage="sap-icon://database" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 with custom quota"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="LIFECYCLE &amp; MAINTENANCE" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Upgrade Center" subheader="Move tenants to new releases" headerImage="sap-icon://it-system" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="2 upgrades pending"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Company Configuration" subheader="Base settings &amp; defaults" headerImage="sap-icon://action-settings" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Open"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Backup &amp; Restore" subheader="Tenant data protection" headerImage="sap-icon://save" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Last backup: 02:00"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   RELEASES SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="releasesSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Available Releases" subheader="In version catalog" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="b1-2802 · b1-2808"><NumericContent value="2" icon="sap-icon://it-system" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="On Latest (b1-2808)" subheader="Companies up to date" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Fully current"><NumericContent value="10" valueColor="Good" icon="sap-icon://status-positive" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="On Previous (b1-2802)" subheader="Upgrade available" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Action required"><NumericContent value="2" valueColor="Critical" icon="sap-icon://alert" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="LTS Releases" subheader="Long-term support" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="b1-2808 is LTS"><NumericContent value="1" icon="sap-icon://key" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="RELEASE MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Release Catalog" subheader="Available versions" headerImage="sap-icon://it-system" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="b1-2802, b1-2808"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Upgrade Center" subheader="Companies pending upgrade" headerImage="sap-icon://upload" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="2 companies pending"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Release Notes" subheader="Changelog &amp; notices" headerImage="sap-icon://document-text" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="View changelog"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   LICENSES SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="licensesSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Total Pool" subheader="Named user licenses" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Across all customers"><NumericContent value="25" icon="sap-icon://crm-service-tickets" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Assigned" subheader="Seats in use" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="18 of 25 seats used"><NumericContent value="18" scale="/25" valueColor="Critical" indicator="Up" icon="sap-icon://employee" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Available" subheader="Ready to assign" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Unassigned seats"><NumericContent value="7" valueColor="Good" icon="sap-icon://status-positive" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Expiring Soon" subheader="Within 90 days" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Next: 2027-09-30"><NumericContent value="0" valueColor="Good" icon="sap-icon://calendar" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="LICENSE MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="License Overview" subheader="All customers &amp; pools" headerImage="sap-icon://crm-service-tickets" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="8 customers"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Assignment Management" subheader="Grant &amp; revoke seats" headerImage="sap-icon://employee" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Professional · Limited"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="License Requests" subheader="Pending approvals" headerImage="sap-icon://document" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="0 pending"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Expiry Calendar" subheader="Upcoming renewals" headerImage="sap-icon://calendar" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Next: 2027-09-30"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   EXTENSIONS SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="extensionsSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="In Catalog" subheader="Available extensions" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Add-ons &amp; plugins"><NumericContent value="8" icon="sap-icon://tools-opportunity" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Entitled Customers" subheader="Access granted" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="of 8 total customers"><NumericContent value="5" valueColor="Good" icon="sap-icon://group" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Active Installations" subheader="Deployed &amp; running" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Across all tenants"><NumericContent value="12" valueColor="Good" icon="sap-icon://status-positive" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Pending Review" subheader="Awaiting approval" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Action required"><NumericContent value="1" valueColor="Critical" icon="sap-icon://alert" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="EXTENSION MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Extension Catalog" subheader="Browse available add-ons" headerImage="sap-icon://tools-opportunity" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="8 available"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Entitlement Management" subheader="Grant &amp; revoke per customer" headerImage="sap-icon://crm-service-tickets" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Grant / revoke"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Custom Add-ons" subheader="Customer-uploaded extensions" headerImage="sap-icon://add-equipment" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="2 installed"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Extension Approvals" subheader="Review &amp; publish" headerImage="sap-icon://document" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="1 pending"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   PLATFORM — DATABASE INSTANCES SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="instancesSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="DB Instances" subheader="All healthy" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Pool A · B · C"><NumericContent value="3" valueColor="Good" icon="sap-icon://database" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Component Health" subheader="Running pods" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All pods healthy"><NumericContent value="12" scale="/12" valueColor="Good" icon="sap-icon://connected" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="CPU Usage" subheader="Cluster average" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Normal range"><NumericContent value="12" scale="%" valueColor="Good" indicator="Down" icon="sap-icon://performance" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Memory Usage" subheader="Cluster average" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Normal range"><NumericContent value="45" scale="%" valueColor="Good" icon="sap-icon://database" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="INSTANCE MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Instance List" subheader="tenant-pool-a/b/c" headerImage="sap-icon://database" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 instances"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Storage Pools" subheader="Capacity &amp; quotas" headerImage="sap-icon://save" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="72% free"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Network Config" subheader="Routes &amp; ingress" headerImage="sap-icon://chain-link" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All routes active"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="HA Status" subheader="High availability nodes" headerImage="sap-icon://chain-link" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 / 3 nodes active"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="HOSTED COMPONENTS (PER INSTANCE)" design="Bold"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Web Client" subheader="SAP B1 browser client" headerImage="sap-icon://world" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Running: 3 / 3"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Service Layer" subheader="REST API &amp; OData" headerImage="sap-icon://connected" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Running: 3 / 3"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Job Service" subheader="Scheduled &amp; batch jobs" headerImage="sap-icon://appointment-2" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Running: 3 / 3"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Mobile Service" subheader="SAP B1 mobile client" headerImage="sap-icon://iphone" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Running: 3 / 3"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   PLATFORM — DEPLOYMENTS SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="deploySection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Active Deployments" subheader="Running rollouts" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All progressing"><NumericContent value="3" valueColor="Good" icon="sap-icon://upload" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Pending Rollouts" subheader="Queued for deploy" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Scheduled"><NumericContent value="1" valueColor="Critical" icon="sap-icon://time-entry-request" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Failed" subheader="Require attention" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="None"><NumericContent value="0" valueColor="Good" icon="sap-icon://status-positive" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="DEPLOYMENT MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Deployment Groups" subheader="K8s namespaces" headerImage="sap-icon://it-system" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 active groups"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Rollback Manager" subheader="Revert to prior release" headerImage="sap-icon://nav-back" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Last rollback: none"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Deploy History" subheader="Audit trail" headerImage="sap-icon://document-text" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="View log"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   PLATFORM — HIGH AVAILABILITY SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="haSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="HA Nodes" subheader="Cluster nodes" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All active"><NumericContent value="3" scale="/3" valueColor="Good" icon="sap-icon://chain-link" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Failover Events" subheader="Last 30 days" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="No incidents"><NumericContent value="0" valueColor="Good" icon="sap-icon://status-positive" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Replication Lag" subheader="Primary → Replica" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Within SLA"><NumericContent value="2" scale="ms" valueColor="Good" icon="sap-icon://lateness" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="HIGH AVAILABILITY CONFIGURATION" design="Bold"/><Link text="Configure" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Cluster Configuration" subheader="Node topology &amp; roles" headerImage="sap-icon://chain-link" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 nodes configured"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Failover Rules" subheader="Auto-failover policies" headerImage="sap-icon://action-settings" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Configured"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Health Probes" subheader="Liveness &amp; readiness" headerImage="sap-icon://stethoscope" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All passing"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══════════════════════════════════════════════════════════════
+   PLATFORM — MONITORING SECTION
+══════════════════════════════════════════════════════════════ */
+'<VBox id="monitoringSection" visible="false">',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="OVERVIEW" design="Bold"/><Link text="View dashboards" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Active Alerts" subheader="Open &amp; unacknowledged" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="1 critical"><NumericContent value="3" valueColor="Critical" indicator="Up" icon="sap-icon://alert" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="Critical Alerts" subheader="Requires immediate action" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Escalate now"><NumericContent value="1" valueColor="Error" icon="sap-icon://status-negative" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="MONITORING &amp; OBSERVABILITY" design="Bold"/><Link text="Manage" href="#"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Alert Management" subheader="Active alerts &amp; thresholds" headerImage="sap-icon://alert" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 active · 1 critical"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Audit Log" subheader="System events &amp; changes" headerImage="sap-icon://audit" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="View events"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Job Monitor" subheader="Scheduled &amp; batch jobs" headerImage="sap-icon://appointment-2" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="4 scheduled today"/>',
+'    </GenericTile>',
+
+'    <GenericTile header="Component Status" subheader="Service health per pod" headerImage="sap-icon://connected" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="All running"/>',
+'    </GenericTile>',
+
+'  </FlexBox>',
+'</VBox>',
+
+/* ══ footer ══ */
+'              <Text text="SAP Business One v11.0  ·  Control Center  ·  © 2026 SAP SE. All rights reserved."',
+'                    textAlign="Center" class="sapUiMediumMarginTop sapUiMediumMarginBottom"/>',
+
+'            </VBox>',
+'          </ScrollContainer>',
+'        </content>',
+'      </Page>',
+
+/* ─────────────────── ACTIVE USERS DETAIL PAGE ─────────────────── */
+'      <Page id="activeUsersPage" enableScrolling="false">',
+'        <customHeader>',
+'          <Bar>',
+'            <contentLeft>',
+'              <Button icon="sap-icon://nav-back" type="Transparent" tooltip="Back" press=".onNavBack"/>',
+'              <Title text="Active Users" level="H3"/>',
+'            </contentLeft>',
+'            <contentRight>',
+'              <ObjectStatus text="24 sessions active" state="Success" icon="sap-icon://status-positive"/>',
+'            </contentRight>',
+'          </Bar>',
+'        </customHeader>',
+'        <content>',
+'          <ScrollContainer horizontal="false" vertical="true" height="100%">',
+'            <VBox class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop">',
+
+'              <HBox wrap="Wrap" class="sapUiSmallMarginBottom" renderType="Bare">',
+'                <GenericTile header="Online Now" subheader="Active sessions" class="' + T + '">',
+'                  <TileContent footer="Named users"><NumericContent value="24" valueColor="Good" indicator="Up" icon="sap-icon://employee" withMargin="false"/></TileContent>',
+'                </GenericTile>',
+'                <GenericTile header="Idle" subheader="No activity &gt; 10 min" class="' + T + '">',
+'                  <TileContent footer="of 24 sessions"><NumericContent value="3" valueColor="Critical" icon="sap-icon://time-entry-request" withMargin="false"/></TileContent>',
+'                </GenericTile>',
+'                <GenericTile header="Companies" subheader="With active sessions" class="' + T + '">',
+'                  <TileContent footer="of 12 total"><NumericContent value="4" icon="sap-icon://building" withMargin="false"/></TileContent>',
+'                </GenericTile>',
+'                <GenericTile header="Avg. Session" subheader="Today" class="' + T + '">',
+'                  <TileContent footer="hours:minutes"><NumericContent value="2.4" scale="h" icon="sap-icon://history" withMargin="false"/></TileContent>',
+'                </GenericTile>',
+'              </HBox>',
+
+'              <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'                <Label text="USER SESSIONS" design="Bold"/>',
+'                <Button text="Terminate All Idle" icon="sap-icon://disconnected" type="Attention"/>',
+'              </HBox>',
+
+'              <Table items="{/activeUsers}" alternateRowColors="true" sticky="ColumnHeaders">',
+'                <columns>',
+'                  <Column><Text text="User"/></Column>',
+'                  <Column><Text text="Role"/></Column>',
+'                  <Column><Text text="Company"/></Column>',
+'                  <Column><Text text="Module"/></Column>',
+'                  <Column><Text text="Login Time"/></Column>',
+'                  <Column><Text text="Session"/></Column>',
+'                  <Column><Text text="Status"/></Column>',
+'                  <Column hAlign="End"><Text text="Actions"/></Column>',
+'                </columns>',
+'                <items>',
+'                  <ColumnListItem type="Active">',
+'                    <cells>',
+'                      <ObjectIdentifier title="{name}" text="{email}"/>',
+'                      <Text text="{role}"/>',
+'                      <Text text="{company}"/>',
+'                      <Text text="{module}"/>',
+'                      <Text text="{loginTime}"/>',
+'                      <Text text="{session}"/>',
+'                      <ObjectStatus text="{statusText}" state="{statusState}" icon="{statusIcon}"/>',
+'                      <Button icon="sap-icon://disconnected" type="Transparent" tooltip="Terminate session"/>',
+'                    </cells>',
+'                  </ColumnListItem>',
+'                </items>',
+'              </Table>',
+
+'            </VBox>',
+'          </ScrollContainer>',
+'        </content>',
+'      </Page>',
+
+/* ─────────────────── WIZARD PAGE ─────────────────── */
+'      <Page id="wizardPage" enableScrolling="true">',
+'        <customHeader>',
+'          <Bar>',
+'            <contentLeft>',
+'              <Button icon="sap-icon://nav-back" type="Transparent" tooltip="Back to Control Center" press=".onNavBack"/>',
+'              <Title text="Tenant Creation Wizard" level="H3"/>',
+'            </contentLeft>',
+'            <contentRight>',
+'              <ObjectStatus text="New Tenant Provisioning" state="Information" icon="sap-icon://add"/>',
+'            </contentRight>',
+'          </Bar>',
+'        </customHeader>',
+'        <content/>',
+'      </Page>',
+
+'    </pages>',
+'  </NavContainer>',
+'</tnt:mainContents>',
+
+'</tnt:ToolPage>',
+'</mvc:View>'
+  ].join('\n');
+
+  sap.ui.xmlview({ viewContent: sXML }).setModel(oModel).placeAt("b1-root");
+});
+</script>
+</body>
+</html>
