@@ -43,6 +43,7 @@
     .b1wzNavLabel { color: var(--sapContent_LabelColor); font-size: 0.875rem; }
     .b1wzNavLabelActive { color: var(--sapHighlightColor, #0854a0); font-size: 0.875rem; font-weight: bold; }
     .b1wzNavActive { background: var(--sapList_SelectionBackgroundColor, #e8f1fb) !important; border-radius: 0.25rem; }
+    .b1ccWizContent { padding: 0.75rem 1.5rem !important; }
   </style>
 </head>
 <body class="sapUiBody sapUiSizeCozy" id="b1-root">
@@ -140,23 +141,31 @@ sap.ui.getCore().attachInit(function () {
     onNewCompanyPress: function () {
       var self = this;
       // Quick mode picker before navigating
-      var oNew  = new sap.m.RadioButton({ text:"New — Create a default tenant",        groupName:"wizMode", selected:true });
-      var oBkp  = new sap.m.RadioButton({ text:"From Backup — Restore from backup file", groupName:"wizMode" });
       var oDlg  = new sap.m.Dialog({
-        title: "Tenant Creation Wizard",
+        title: "Company Creation Wizard",
+        contentWidth: "30rem",
         content:[
-          new sap.m.VBox({ class:"sapUiSmallMarginBeginEnd sapUiSmallMarginTopBottom", items:[
-            new sap.m.Title({ text:"Welcome to the Tenant Creation Wizard.", level:"H4", class:"sapUiSmallMarginBottom" }),
-            new sap.m.Text({ text:"You can use this wizard to create a new tenant. Select a creation option and choose Start.", wrapping:true, class:"sapUiSmallMarginBottom" }),
-            new sap.m.Title({ text:"Creation Options", level:"H5", class:"sapUiSmallMarginBottom" }),
-            oNew, oBkp
-          ]})
+          new sap.ui.core.HTML({
+            content:
+              '<div style="padding:1rem 1.5rem 0.5rem 1.5rem;font-family:var(--sapFontFamily,\'72\',sans-serif);color:var(--sapTextColor,#32363a)">' +
+              '<div style="font-size:1rem;font-weight:700;margin-bottom:0.5rem">Welcome to the Company Creation Wizard.</div>' +
+              '<div style="font-size:0.875rem;margin-bottom:1rem">You can use this wizard to create a new Company. Select a creation option and choose Start.</div>' +
+              '<div style="font-size:0.875rem;font-weight:700;margin-bottom:0.5rem">Creation Options</div>' +
+              '<label style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;cursor:pointer">' +
+                '<input type="radio" id="wizModeNew" name="wizMode" value="new" checked style="width:1rem;height:1rem;accent-color:#0070b1"> New — Create a new company' +
+              '</label>' +
+              '<label style="display:flex;align-items:center;gap:0.75rem;cursor:pointer">' +
+                '<input type="radio" id="wizModeBkp" name="wizMode" value="backup" style="width:1rem;height:1rem;accent-color:#0070b1"> From Backup — Restore company from backup file' +
+              '</label>' +
+              '</div>'
+          })
         ],
         beginButton: new sap.m.Button({
           text:"Start Wizard", type:"Emphasized",
           press: function(){
+            var el = document.querySelector('input[name="wizMode"]:checked');
+            var sMode = (el && el.value === "backup") ? "backup" : "new";
             oDlg.close();
-            var sMode = oBkp.getSelected() ? "backup" : "new";
             self._startWizardPage(sMode);
           }
         }),
@@ -763,7 +772,7 @@ sap.ui.getCore().attachInit(function () {
 '      <TileContent footer="Provision"/>',
 '    </GenericTile>',
 
-'    <GenericTile header="New Company" subheader="Provision a tenant" headerImage="sap-icon://building" press=".onNewCompanyPress" class="' + T + '">',
+'    <GenericTile header="New Company" subheader="Provision a new Company" headerImage="sap-icon://building" press=".onNewCompanyPress" class="' + T + '">',
 '      <TileContent footer="Provision"/>',
 '    </GenericTile>',
 
@@ -886,7 +895,7 @@ sap.ui.getCore().attachInit(function () {
 '      <TileContent footer="12 companies"/>',
 '    </GenericTile>',
 
-'    <GenericTile header="New Company" subheader="Provision a tenant" headerImage="sap-icon://add" press=".onNewCompanyPress" class="' + T + '">',
+'    <GenericTile header="New Company" subheader="Provision a new Company" headerImage="sap-icon://add" press=".onNewCompanyPress" class="' + T + '">',
 '      <TileContent footer="Provision"/>',
 '    </GenericTile>',
 
@@ -1363,10 +1372,10 @@ sap.ui.getCore().attachInit(function () {
 '          <Bar>',
 '            <contentLeft>',
 '              <Button icon="sap-icon://nav-back" type="Transparent" tooltip="Back to Control Center" press=".onNavBack"/>',
-'              <Title text="Tenant Creation Wizard" level="H3"/>',
+'              <Title text="Company Creation Wizard" level="H3"/>',
 '            </contentLeft>',
 '            <contentRight>',
-'              <ObjectStatus text="New Tenant Provisioning" state="Information" icon="sap-icon://add"/>',
+'              <ObjectStatus text="New Company Provisioning" state="Information" icon="sap-icon://add"/>',
 '            </contentRight>',
 '          </Bar>',
 '        </customHeader>',
