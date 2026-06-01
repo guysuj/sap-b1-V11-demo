@@ -186,14 +186,14 @@ sap.ui.getCore().attachInit(function () {
 
     _wizMockUsers: function () {
       return [
-        { include:true,  userCode:"harigijs",     systemUser:"harigijs",     type:"Customer", roles:["Customer Administrator"],          superuser:false, license:"Professional" },
-        { include:true,  userCode:"gijstest1",    systemUser:"gijstest1",    type:"Customer", roles:["Business User"],                   superuser:false, license:"Limited"      },
-        { include:false, userCode:"kosto2",        systemUser:"kosto2",       type:"Customer", roles:["Business User"],                   superuser:false, license:""             },
-        { include:false, userCode:"kosto",         systemUser:"kosto",        type:"Customer", roles:["Consultant"],                      superuser:false, license:""             },
-        { include:true,  userCode:"sapserviceb1c", systemUser:"sapserviceb1c",type:"Operator", roles:["Landscape Operator"],              superuser:true,  license:"Professional" },
-        { include:false, userCode:"c5252580",      systemUser:"c5252580",     type:"Operator", roles:["Landscape Operator"],              superuser:false, license:""             },
-        { include:false, userCode:"i043704",       systemUser:"i043704",      type:"Operator", roles:["Consultant","Business User"],      superuser:false, license:""             },
-        { include:false, userCode:"test",          systemUser:"test",         type:"Operator", roles:["Business User"],                   superuser:false, license:""             }
+        { include:true,  userCode:"harigijs",     systemUser:"harigijs",     type:"Customer", roles:["Customer Administrator"],          superuser:false, license:"Professional", authGroups:["Sales","Accounting"]        },
+        { include:true,  userCode:"gijstest1",    systemUser:"gijstest1",    type:"Customer", roles:["Business User"],                   superuser:false, license:"Limited",      authGroups:["Sales"]                     },
+        { include:false, userCode:"kosto2",        systemUser:"kosto2",       type:"Customer", roles:["Business User"],                   superuser:false, license:"",             authGroups:[]                            },
+        { include:false, userCode:"kosto",         systemUser:"kosto",        type:"Customer", roles:["Consultant"],                      superuser:false, license:"",             authGroups:["Purchasing"]                },
+        { include:true,  userCode:"sapserviceb1c", systemUser:"sapserviceb1c",type:"Operator", roles:["Landscape Operator"],              superuser:true,  license:"Professional", authGroups:[]                            },
+        { include:false, userCode:"c5252580",      systemUser:"c5252580",     type:"Operator", roles:["Landscape Operator"],              superuser:false, license:"",             authGroups:[]                            },
+        { include:false, userCode:"i043704",       systemUser:"i043704",      type:"Operator", roles:["Consultant","Business User"],      superuser:false, license:"",             authGroups:["Accounting"]                },
+        { include:false, userCode:"test",          systemUser:"test",         type:"Operator", roles:["Business User"],                   superuser:false, license:"",             authGroups:[]                            }
       ];
     },
 
@@ -333,8 +333,9 @@ sap.ui.getCore().attachInit(function () {
         text:"Select which users to include in this tenant, assign a role and a license type to each. Changes update the license pool below in real time.",
         wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
 
-      var aLicTypes = ["","Professional","Limited","Mobile Service","Starter Package","Auditor"];
-      var aRoles    = ["Business User","Consultant","Customer Administrator","Landscape Operator"];
+      var aLicTypes  = ["","Professional","Limited","Mobile Service","Starter Package","Auditor"];
+      var aRoles     = ["Business User","Consultant","Customer Administrator","Landscape Operator"];
+      var aAuthGroups = ["Sales","Purchasing","Accounting","Inventory","HR","Administration","Service","Financials"];
       var oPoolModel = new sap.ui.model.json.JSONModel({ pool: self._wizCalcPool() });
 
       var fnAvail = function(){
@@ -360,8 +361,9 @@ sap.ui.getCore().attachInit(function () {
           new sap.m.Column({ header: new sap.m.Label({text:"System User"}),  width:"9rem"   }),
           new sap.m.Column({ header: new sap.m.Label({text:"Type"}),         width:"7rem"   }),
           new sap.m.Column({ header: new sap.m.Label({text:"Role"})                         }),
-          new sap.m.Column({ header: new sap.m.Label({text:"Superuser"}),    width:"6rem",  hAlign:"Center" }),
-          new sap.m.Column({ header: new sap.m.Label({text:"License Type"}), width:"14rem"  })
+          new sap.m.Column({ header: new sap.m.Label({text:"Superuser"}),         width:"6rem",  hAlign:"Center" }),
+          new sap.m.Column({ header: new sap.m.Label({text:"Authorization Groups"})               }),
+          new sap.m.Column({ header: new sap.m.Label({text:"License Type"}),      width:"14rem"  })
         ]
       });
 
@@ -417,6 +419,11 @@ sap.ui.getCore().attachInit(function () {
               new sap.m.ObjectStatus({ text:u.type, state: u.type==="Operator"?"Warning":"Success" }),
               oRoleMCB,
               new sap.m.CheckBox({ selected:u.superuser, select:function(oE){ u.superuser=oE.getParameter("selected"); } }),
+              new sap.m.MultiComboBox({
+                selectedKeys: u.authGroups||[],
+                items: aAuthGroups.map(function(g){ return new sap.ui.core.Item({key:g,text:g}); }),
+                selectionChange: function(oE){ u.authGroups = oE.getSource().getSelectedKeys(); }
+              }),
               oLicSel
             ]
           });
