@@ -211,7 +211,7 @@ sap.ui.getCore().attachInit(function () {
       // Count how many included users have each license assigned
       var counts = {};
       self._wizS.users.forEach(function(u){
-        if (u.include && u.license) counts[u.license] = (counts[u.license]||0) + 1;
+        if (u.license) counts[u.license] = (counts[u.license]||0) + 1;
       });
       return Object.keys(self._wizPoolBase).map(function(k){
         var b = self._wizPoolBase[k];
@@ -235,7 +235,7 @@ sap.ui.getCore().attachInit(function () {
       oWizPage.removeAllContent();
 
       // ── Step 1: Select Customer ──
-      var oStep1 = new sap.m.WizardStep({ title:"Select Customer", icon:"sap-icon://group", nextButtonText:"Select Database Instance",
+      var oStep1 = new sap.m.WizardStep({ title:"Select Customer", icon:"sap-icon://group",
         complete: function(){ oStep1.setValidated(true); } });
       oStep1.addContent(new sap.m.Text({ text:"Select the customer for which you want to create a tenant.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var aCust = [
@@ -259,7 +259,7 @@ sap.ui.getCore().attachInit(function () {
       oStep1.setValidated(false);
 
       // ── Step 2: Select Database Instance ──
-      var oStep2 = new sap.m.WizardStep({ title:"Select Database Instance", icon:"sap-icon://database", nextButtonText:"Tenant Information" });
+      var oStep2 = new sap.m.WizardStep({ title:"Select Database Instance", icon:"sap-icon://database" });
       oStep2.addContent(new sap.m.Text({ text:"Select the database instance in which you want to create a tenant.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var aInst = [
         {name:"DB-PROD-001",purpose:"Productive",version:"1000.190.09",tenants:"12"},
@@ -301,7 +301,7 @@ sap.ui.getCore().attachInit(function () {
       oStep3Bkp.setValidated(self._wizS.mode !== "backup");
 
       // ── Step 4: Tenant Information ──
-      var oStep4 = new sap.m.WizardStep({ title:"Tenant Information", icon:"sap-icon://building", nextButtonText:"Users & Licenses" });
+      var oStep4 = new sap.m.WizardStep({ title:"Tenant Information", icon:"sap-icon://building" });
       oStep4.addContent(new sap.m.Text({ text:"Specify the tenant information.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var validateInfo = function(){
         oStep4.setValidated(!!(self._wizS.tenantName && self._wizS.dbName && self._wizS.purpose));
@@ -327,44 +327,33 @@ sap.ui.getCore().attachInit(function () {
       oStep4.setValidated(false);
 
       // ── Step 5: Users & Licenses ──
-      var oStep5 = new sap.m.WizardStep({ title:"Users & Licenses", icon:"sap-icon://employee", nextButtonText:"Review" });
+      var oStep5 = new sap.m.WizardStep({ title:"Users & Licenses", icon:"sap-icon://employee" });
       oStep5.setValidated(true);
       oStep5.addContent(new sap.m.Text({
         text:"Select which users to include in this tenant, assign a role and a license type to each. Changes update the license pool below in real time.",
         wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
 
-      var aLicTypes   = ["","Professional","Limited","Mobile Service","Starter Package","Auditor"];
-      var aRoles      = ["Business User","Consultant","Customer Administrator","Landscape Operator"];
-      var oUsrModel   = new sap.ui.model.json.JSONModel({ users: self._wizS.users });
-      var oPoolModel  = new sap.ui.model.json.JSONModel({ pool: self._wizCalcPool() });
+      var aLicTypes = ["","Professional","Limited","Mobile Service","Starter Package","Auditor"];
+      var aRoles    = ["Business User","Consultant","Customer Administrator","Landscape Operator"];
+      var oPoolModel = new sap.ui.model.json.JSONModel({ pool: self._wizCalcPool() });
 
-      // helper: refresh pool table after any change
-      var refreshPool = function(){
-        oPoolModel.setProperty("/pool", self._wizCalcPool());
+      var fnAvail = function(){
+        var m = {};
+        self._wizCalcPool().forEach(function(p){ m[p.key] = Math.max(0, p.total - p.used); });
+        return m;
       };
 
-      // ── Users table ──
-      var oSelectAllCB = new sap.m.CheckBox({
-        text: "Select / Deselect All",
-        selected: self._wizS.users.every(function(u){ return u.include; }),
-        select: function(oE){
-          var bAll = oE.getParameter("selected");
-          self._wizS.users.forEach(function(u){ u.include = bAll; });
-          oUsrModel.setProperty("/users", self._wizS.users);
-          refreshPool();
-        }
-      });
+      // ── Users table (imperative rows, rebuilt on every change) ──
+      var oSelectAllCB = new sap.m.CheckBox({ text:"Select / Deselect All" });
 
       var oUsrTbl = new sap.m.Table({
         sticky:["ColumnHeaders"],
         alternateRowColors: true,
-        headerToolbar: new sap.m.OverflowToolbar({
-          content:[
-            new sap.m.Title({ text:"Users", level:"H5" }),
-            new sap.m.ToolbarSpacer(),
-            oSelectAllCB
-          ]
-        }),
+        headerToolbar: new sap.m.OverflowToolbar({ content:[
+          new sap.m.Title({ text:"Users", level:"H5" }),
+          new sap.m.ToolbarSpacer(),
+          oSelectAllCB
+        ]}),
         columns:[
           new sap.m.Column({ header: new sap.m.Label({text:"Include"}),      width:"5rem",  hAlign:"Center" }),
           new sap.m.Column({ header: new sap.m.Label({text:"User Code"}),    width:"9rem"   }),
@@ -375,65 +364,79 @@ sap.ui.getCore().attachInit(function () {
           new sap.m.Column({ header: new sap.m.Label({text:"License Type"}), width:"14rem"  })
         ]
       });
-      oUsrTbl.setModel(oUsrModel,"wd");
-      oUsrTbl.bindItems("wd>/users", new sap.m.ColumnListItem({
-        highlight: { path:"wd>include", formatter: function(b){ return b ? "Success" : "None"; } },
-        cells:[
-          // Include checkbox
-          new sap.m.CheckBox({ selected:"{wd>include}", select: function(oE){
-            var bVal = oE.getParameter("selected");
-            var oCtx = oE.getSource().getBindingContext("wd");
-            var sPath = oCtx.getPath();
-            oCtx.getModel("wd").setProperty(sPath+"/include", bVal);
-            // sync back to wizS
-            var idx = parseInt(sPath.replace("/users/",""));
-            self._wizS.users[idx].include = bVal;
-            // update select-all checkbox state
-            oSelectAllCB.setSelected(self._wizS.users.every(function(u){ return u.include; }));
+
+      var fnBuildRows = function(){
+        var mA = fnAvail();
+        oUsrTbl.removeAllItems();
+        self._wizS.users.forEach(function(u, idx){
+          var oLicSel = new sap.m.Select({ forceSelection:false });
+          oLicSel.addItem(new sap.ui.core.Item({key:"", text:"—"}));
+          aLicTypes.filter(Boolean).forEach(function(l){
+            oLicSel.addItem(new sap.ui.core.Item({key:l, text:l+" ("+(mA[l]||0)+" available)"}));
+          });
+          oLicSel.setSelectedKey(u.license||"");
+
+          // patch the closed-state label to show only the key (no count)
+          var fnPatchLabel = function(){
+            var oDom = oLicSel.getDomRef();
+            if (!oDom) return;
+            var oSpan = oDom.querySelector(".sapMSelectListItemText");
+            if (oSpan) { oSpan.textContent = oLicSel.getSelectedKey() || "—"; }
+          };
+          oLicSel.addEventDelegate({ onAfterRendering: fnPatchLabel });
+
+          oLicSel.attachChange(function(oE){
+            u.license = oE.getParameter("selectedItem").getKey();
             refreshPool();
-          }}),
-          new sap.m.Text({text:"{wd>userCode}"}),
-          new sap.m.Text({text:"{wd>systemUser}"}),
-          new sap.m.ObjectStatus({ text:"{wd>type}",
-            state:{ path:"wd>type", formatter:function(t){ return t==="Operator"?"Warning":"Success"; }} }),
-          // Role — MultiComboBox (Fiori standard for multi-select inline)
-          new sap.m.MultiComboBox({
-            selectedKeys:"{wd>roles}",
+            // after pool refresh rebuilds rows, also patch this label
+            setTimeout(fnPatchLabel, 0);
+          });
+
+          var oRoleMCB = new sap.m.MultiComboBox({
+            selectedKeys: u.roles||[],
             items: aRoles.map(function(r){ return new sap.ui.core.Item({key:r,text:r}); }),
-            selectionChange: function(oE){
-              var oCtx = oE.getSource().getBindingContext("wd");
-              var sPath = oCtx.getPath();
-              var aKeys = oE.getSource().getSelectedKeys();
-              oCtx.getModel("wd").setProperty(sPath+"/roles", aKeys);
-              var idx = parseInt(sPath.replace("/users/",""));
-              self._wizS.users[idx].roles = aKeys;
-            }
-          }),
-          // Superuser — clickable toggle
-          new sap.m.CheckBox({ selected:"{wd>superuser}", select: function(oE){
-            var bVal = oE.getParameter("selected");
-            var oCtx = oE.getSource().getBindingContext("wd");
-            var sPath = oCtx.getPath();
-            oCtx.getModel("wd").setProperty(sPath+"/superuser", bVal);
-            var idx = parseInt(sPath.replace("/users/",""));
-            self._wizS.users[idx].superuser = bVal;
-          }}),
-          // License type — updates pool on change
-          new sap.m.Select({
-            selectedKey:"{wd>license}",
-            items: aLicTypes.map(function(l){ return new sap.ui.core.Item({key:l,text:l||"—"}); }),
-            change: function(oE){
-              var oCtx = oE.getSource().getBindingContext("wd");
-              var sPath = oCtx.getPath();
-              var sLic = oE.getParameter("selectedItem").getKey();
-              oCtx.getModel("wd").setProperty(sPath+"/license", sLic);
-              var idx = parseInt(sPath.replace("/users/",""));
-              self._wizS.users[idx].license = sLic;
+            selectionChange: function(oE){ u.roles = oE.getSource().getSelectedKeys(); }
+          });
+
+          var oIncCB = new sap.m.CheckBox({
+            selected: u.include,
+            select: function(oE){
+              u.include = oE.getParameter("selected");
+              oRow.setHighlight(u.include ? "Success" : "None");
+              oSelectAllCB.setSelected(self._wizS.users.every(function(x){ return x.include; }));
               refreshPool();
             }
-          })
-        ]
-      }));
+          });
+
+          var oRow = new sap.m.ColumnListItem({
+            highlight: u.include ? "Success" : "None",
+            cells:[
+              oIncCB,
+              new sap.m.Text({text: u.userCode}),
+              new sap.m.Text({text: u.systemUser}),
+              new sap.m.ObjectStatus({ text:u.type, state: u.type==="Operator"?"Warning":"Success" }),
+              oRoleMCB,
+              new sap.m.CheckBox({ selected:u.superuser, select:function(oE){ u.superuser=oE.getParameter("selected"); } }),
+              oLicSel
+            ]
+          });
+          oUsrTbl.addItem(oRow);
+        });
+        oSelectAllCB.setSelected(self._wizS.users.every(function(u){ return u.include; }));
+      };
+
+      var refreshPool = function(){
+        oPoolModel.setProperty("/pool", self._wizCalcPool());
+        fnBuildRows(); // rebuild all rows with updated counts
+      };
+
+      oSelectAllCB.attachSelect(function(oE){
+        var bAll = oE.getParameter("selected");
+        self._wizS.users.forEach(function(u){ u.include = bAll; });
+        refreshPool();
+      });
+
+      fnBuildRows(); // initial render
       oStep5.addContent(oUsrTbl);
 
       // ── License Pool Summary (live) ──
@@ -464,7 +467,7 @@ sap.ui.getCore().attachInit(function () {
 
       // ── Step 6: Review ──
       var oStep6 = new sap.m.WizardStep({
-        title:"Review", icon:"sap-icon://detail-view", nextButtonText:"Start Provisioning",
+        title:"Review", icon:"sap-icon://detail-view",
         activate: function(){ self._populateReviewStep(oStep6); }
       });
       oStep6.setValidated(true);
@@ -479,11 +482,23 @@ sap.ui.getCore().attachInit(function () {
       self._wizFinishStep = oStep7;
 
       // ── Assemble sap.m.Wizard ──
+      var aAllSteps = self._wizS.mode === "backup"
+        ? [oStep1, oStep2, oStep3Bkp, oStep4, oStep5, oStep6, oStep7]
+        : [oStep1, oStep2,            oStep4, oStep5, oStep6, oStep7];
+
+      // Override setWizardContext on every step — this is what UI5 calls to set
+      // the "Step N" label. We intercept and force "Next" instead.
+      aAllSteps.forEach(function(oStep){
+        var fnOrig = oStep.setWizardContext.bind(oStep);
+        oStep.setWizardContext = function(oCtx){
+          if (oCtx && typeof oCtx.sButtonText !== "undefined") { oCtx.sButtonText = "Next"; }
+          fnOrig(oCtx);
+        };
+      });
+
       var oWizard = new sap.m.Wizard({
         showNextButton: true,
-        steps: self._wizS.mode === "backup"
-          ? [oStep1, oStep2, oStep3Bkp, oStep4, oStep5, oStep6, oStep7]
-          : [oStep1, oStep2,            oStep4, oStep5, oStep6, oStep7],
+        steps: aAllSteps,
         complete: function(){ self._startProvisioning(oStep7); }
       });
 
