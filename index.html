@@ -58,7 +58,7 @@ sap.ui.getCore().attachInit(function () {
   ];
   var SECTION_TITLES = {
     home:       "Control Center",
-    customers:  "Customers",
+    customers:  "Accounts",
     companies:  "Companies",
     releases:   "Releases",
     licenses:   "Licenses",
@@ -686,7 +686,7 @@ sap.ui.getCore().attachInit(function () {
 '      <tnt:NavigationListItem id="n-home" text="Home" icon="sap-icon://home" key="home" selected="true"/>',
 
 '      <tnt:NavigationListItem id="n-business" text="Business" icon="sap-icon://business-objects-experience" expanded="true" visible="true">',
-'        <tnt:NavigationListItem id="n-customers"  text="Customers"  key="customers"/>',
+'        <tnt:NavigationListItem id="n-customers"  text="Accounts"   key="customers"/>',
 '        <tnt:NavigationListItem id="n-companies"  text="Companies"  key="companies"/>',
 '        <tnt:NavigationListItem id="n-releases"   text="Releases"   key="releases"/>',
 '        <tnt:NavigationListItem id="n-licenses"   text="Licenses"   key="licenses"/>',
@@ -815,66 +815,58 @@ sap.ui.getCore().attachInit(function () {
 '<VBox id="customersSection" visible="false">',
 
 '  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
-'    <Label text="OVERVIEW" design="Bold"/><Link text="View all metrics" href="#"/>',
+'    <Label text="CUSTOMERS" design="Bold"/>',
 '  </HBox>',
 '  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
 
-'    <GenericTile header="Total Customers" subheader="Active" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="All healthy"><NumericContent value="8" valueColor="Good" icon="sap-icon://group" withMargin="false"/></TileContent>',
+'    <GenericTile header="Add Customer" subheader="Onboard a new customer" headerImage="sap-icon://add" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Quick onboarding"/>',
 '    </GenericTile>',
 
-'    <GenericTile header="Licensed Users" subheader="Seats assigned" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="Across all customers"><NumericContent value="18" valueColor="Good" icon="sap-icon://crm-service-tickets" withMargin="false"/></TileContent>',
+'    <GenericTile header="Active Customers" subheader="All registered customers" headerImage="sap-icon://group" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="8 active"><NumericContent value="8" valueColor="Good" icon="sap-icon://group" withMargin="false"/></TileContent>',
 '    </GenericTile>',
 
-'    <GenericTile header="Unlicensed Users" subheader="No seat assigned" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="Needs attention"><NumericContent value="6" valueColor="Error" indicator="Up" icon="sap-icon://alert" withMargin="false"/></TileContent>',
-'    </GenericTile>',
-
-'    <GenericTile header="Extension Entitlements" subheader="Active grants" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="Across 5 customers"><NumericContent value="12" icon="sap-icon://tools-opportunity" withMargin="false"/></TileContent>',
-'    </GenericTile>',
-
-'  </FlexBox>',
-
-'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
-'    <Label text="CUSTOMER MANAGEMENT" design="Bold"/><Link text="Manage" href="#"/>',
-'  </HBox>',
-'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
-
-'    <GenericTile header="Customer List" subheader="All registered customers" headerImage="sap-icon://group" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="8 customers"/>',
-'    </GenericTile>',
-
-'    <GenericTile header="User Management" subheader="Users, roles &amp; seats" headerImage="sap-icon://employee" press=".onActiveUsersTilePress" class="' + T + '">',
+'    <GenericTile header="User Management" subheader="Users, roles &amp; seats" headerImage="sap-icon://employee" press=".onTilePress" class="' + T + '">',
 '      <TileContent footer="24 users"/>',
 '    </GenericTile>',
 
-'    <GenericTile header="License Assignments" subheader="Grant &amp; revoke seats" headerImage="sap-icon://crm-service-tickets" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="18 / 25 seats used"/>',
+'  </FlexBox>',
+
+'  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
+'    <Label text="RESELLERS" design="Bold"/>',
+'  </HBox>',
+'  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
+
+'    <GenericTile header="Add Reseller" subheader="Onboard a new reseller" headerImage="sap-icon://add" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Quick onboarding"/>',
 '    </GenericTile>',
 
-'    <GenericTile header="Extension Entitlements" subheader="Per-customer grants" headerImage="sap-icon://tools-opportunity" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="12 active"/>',
+'    <GenericTile header="Active Resellers" subheader="All registered resellers" headerImage="sap-icon://org-chart" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="3 active"><NumericContent value="3" valueColor="Good" icon="sap-icon://org-chart" withMargin="false"/></TileContent>',
+'    </GenericTile>',
+
+'    <GenericTile header="User Management" subheader="Users, roles &amp; seats" headerImage="sap-icon://employee" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="12 users"/>',
 '    </GenericTile>',
 
 '  </FlexBox>',
 
 '  <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiTinyMarginBottom">',
-'    <Label text="IDENTITY &amp; ACCESS" design="Bold"/><Link text="Manage" href="#"/>',
+'    <Label text="OPERATORS" design="Bold"/>',
 '  </HBox>',
 '  <FlexBox wrap="Wrap" class="sapUiMediumMarginBottom">',
 
-'    <GenericTile header="Identity Provider" subheader="IdP &amp; SSO config" headerImage="sap-icon://key" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="1 configured"/>',
+'    <GenericTile header="Add Operator" subheader="Onboard a new operator" headerImage="sap-icon://add" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="Quick onboarding"/>',
 '    </GenericTile>',
 
-'    <GenericTile header="Role Management" subheader="User roles &amp; permissions" headerImage="sap-icon://permission" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="5 roles defined"/>',
+'    <GenericTile header="Active Operators" subheader="All registered operators" headerImage="sap-icon://technical-object" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="5 active"><NumericContent value="5" valueColor="Good" icon="sap-icon://technical-object" withMargin="false"/></TileContent>',
 '    </GenericTile>',
 
-'    <GenericTile header="Audit Log" subheader="User activity &amp; changes" headerImage="sap-icon://audit" press=".onTilePress" class="' + T + '">',
-'      <TileContent footer="View activity"/>',
+'    <GenericTile header="User Management" subheader="Users, roles &amp; seats" headerImage="sap-icon://employee" press=".onTilePress" class="' + T + '">',
+'      <TileContent footer="8 users"/>',
 '    </GenericTile>',
 
 '  </FlexBox>',
