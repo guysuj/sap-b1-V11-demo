@@ -235,7 +235,7 @@ sap.ui.getCore().attachInit(function () {
       oWizPage.removeAllContent();
 
       // ── Step 1: Select Customer ──
-      var oStep1 = new sap.m.WizardStep({ title:"Select Customer", icon:"sap-icon://group",
+      var oStep1 = new sap.m.WizardStep({ title:"Select Customer", icon:"sap-icon://group", nextButtonText:"Select Database Instance",
         complete: function(){ oStep1.setValidated(true); } });
       oStep1.addContent(new sap.m.Text({ text:"Select the customer for which you want to create a tenant.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var aCust = [
@@ -259,7 +259,7 @@ sap.ui.getCore().attachInit(function () {
       oStep1.setValidated(false);
 
       // ── Step 2: Select Database Instance ──
-      var oStep2 = new sap.m.WizardStep({ title:"Select Database Instance", icon:"sap-icon://database" });
+      var oStep2 = new sap.m.WizardStep({ title:"Select Database Instance", icon:"sap-icon://database", nextButtonText:"Tenant Information" });
       oStep2.addContent(new sap.m.Text({ text:"Select the database instance in which you want to create a tenant.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var aInst = [
         {name:"DB-PROD-001",purpose:"Productive",version:"1000.190.09",tenants:"12"},
@@ -282,7 +282,7 @@ sap.ui.getCore().attachInit(function () {
 
       // ── Step 3 (Backup only): Select Backup ──
       var oStep3Bkp = new sap.m.WizardStep({ title:"Select Backup", icon:"sap-icon://save",
-        visible: self._wizS.mode === "backup" });
+        nextButtonText:"Tenant Information", visible: self._wizS.mode === "backup" });
       oStep3Bkp.addContent(new sap.m.Text({ text:"Select a backup file to restore the tenant from.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var aBkp = [
         {file:"CRONUS_INT_20260520_0200.bak", date:"2026-05-20 02:00", size:"2.4 GB", type:"Full"},
@@ -301,7 +301,7 @@ sap.ui.getCore().attachInit(function () {
       oStep3Bkp.setValidated(self._wizS.mode !== "backup");
 
       // ── Step 4: Tenant Information ──
-      var oStep4 = new sap.m.WizardStep({ title:"Tenant Information", icon:"sap-icon://building" });
+      var oStep4 = new sap.m.WizardStep({ title:"Tenant Information", icon:"sap-icon://building", nextButtonText:"Users & Licenses" });
       oStep4.addContent(new sap.m.Text({ text:"Specify the tenant information.", wrapping:true }).addStyleClass("sapUiSmallMarginBottom"));
       var validateInfo = function(){
         oStep4.setValidated(!!(self._wizS.tenantName && self._wizS.dbName && self._wizS.purpose));
@@ -327,7 +327,7 @@ sap.ui.getCore().attachInit(function () {
       oStep4.setValidated(false);
 
       // ── Step 5: Users & Licenses ──
-      var oStep5 = new sap.m.WizardStep({ title:"Users & Licenses", icon:"sap-icon://employee" });
+      var oStep5 = new sap.m.WizardStep({ title:"Users & Licenses", icon:"sap-icon://employee", nextButtonText:"Review" });
       oStep5.setValidated(true);
       oStep5.addContent(new sap.m.Text({
         text:"Select which users to include in this tenant, assign a role and a license type to each. Changes update the license pool below in real time.",
@@ -464,7 +464,7 @@ sap.ui.getCore().attachInit(function () {
 
       // ── Step 6: Review ──
       var oStep6 = new sap.m.WizardStep({
-        title:"Review", icon:"sap-icon://detail-view",
+        title:"Review", icon:"sap-icon://detail-view", nextButtonText:"Start Provisioning",
         activate: function(){ self._populateReviewStep(oStep6); }
       });
       oStep6.setValidated(true);
